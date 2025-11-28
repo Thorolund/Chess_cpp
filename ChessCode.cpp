@@ -36,15 +36,12 @@ class Board;
  * Абстракция Фигур
  * - Атрибуты: 
  * `string name` - K, R, P, ' '
- * `int pos[2]` - {x, y};
  * `int color` 1 - белый, -1 - черный, 0 - пустота
  * - Методы:
  * `string get_symb` - выдает имя, + минус если черный
- * `virtual bool move(int turn[2], Board &board) = 0;` - передвижение фигуры, если возможно
- * `virtual bool check_move(int turn[2], Board &board) = 0;` - проверка возможности хода*/
+ * `virtual  bool check_move(int turn[2][2], Board &board) = 0;` - проверка возможности хода*/
 class Figure {
 	protected:
-	int pos[2]; ///`int pos[2]` - {x, y};
 	string name; ///`string name` - K, R, P, ' '
 	int color = 0; ///`int color` 1 - белый, -1 - черный, 0 - пустота
 	public:
@@ -64,38 +61,27 @@ class Figure {
 		return "   ";
 	}
 	/**
-	 * `virtual bool move(string turn, Board &board) = 0;` - передвижение фигуры, если возможно
+	 * `virtual bool move(int turn[2], Board &board)` - проверка возможности хода
 	 */
-	virtual bool move(int turn[2], Board &board) = 0;
-	/**
-	 * `virtual bool check_move(string turn, Board &board) = 0;` - проверка возможности хода
-	 */
-	virtual bool check_move(int turn[2], Board &board) = 0;
+	virtual  bool check_move(int turn[2][2], Board &board) = 0;
 };
 /** 
  * Король
  * - Атрибуты: 
  * `string name` = "K"
- * `int pos[2]` - {x, y};
  * `int color` 1 - белый, -1 - черный
  * - Методы:
  * `string get_symb` - выдает `K`, + минус если черный
- * `bool move(int turn[2], Board &board) = 0;` - передвижение на одну клетку в восьми направлениях, если возможно
- * `bool check_move(int turn[2], Board &board) = 0;` - проверка возможности хода*/
+ * ` bool check_move(int turn[2][2], Board &board)` - проверка возможности хода*/
 class King: public Figure {
 	public:
 	King() {
 	}
-	King(int set_pos[2], int set_color) {
+	King(int set_color) {
 		name = "K";
-		pos[0] = set_pos[0];
-		pos[1] = set_pos[1];
 		color = set_color;
 	}
-	bool move(int turn[2], Board &board) {
-		return true;
-	}
-	bool check_move(int turn[2], Board &board) {
+	 bool check_move(int turn[2][2], Board &board) {
 		return true;
 	}
 };
@@ -103,26 +89,19 @@ class King: public Figure {
  * Ладья
  * - Атрибуты: 
  * `string name` = "R"
- * `int pos[2]` - {x, y};
  * `int color` 1 - белый, -1 - черный
  * - Методы:
  * `string get_symb` - выдает `R`, + минус если черный
- * `bool move(int turn[2], Board &board) = 0;` - передвижение на линию в четырех направлениях, если возможно
- * `bool check_move(int turn[2], Board &board) = 0;` - проверка возможности хода*/
+ * ` bool check_move(int turn[2][2], Board &board)` - проверка возможности хода*/
 class Rook: public Figure {
 	public:
 	Rook() {
 	}
-	Rook(int set_pos[2], int set_color) {
+	Rook(int set_color) {
 		name = "R";
-		pos[0] = set_pos[0];
-		pos[1] = set_pos[1];
 		color = set_color;
 	}
-	bool move(string turn, Board &board) {
-		return true;
-	}
-	bool check_move(string turn, Board &board) {
+	 bool check_move(int turn[2][2], Board &board) {
 		return true;
 	}
 };
@@ -130,26 +109,19 @@ class Rook: public Figure {
  * Пешка
  * - Атрибуты: 
  * `string name` = "P"
- * `int pos[2]` - {x, y};
  * `int color` 1 - белый, -1 - черный
  * - Методы:
  * `string get_symb` - выдает `P`, + минус если черный
- * `bool move(string turn, Board &board) = 0;` - передвижение на одну клетку вперед(в частном случае - на две), если возможно, может превратиться
- * `bool check_move(string turn, Board &board) = 0;` - проверка возможности хода*/
+ * `bool move(int turn[2], Board &board)` - проверка возможности хода*/
 class Pawn: public Figure {
 	public:
 	Pawn() {
 	}
-	Pawn(int set_pos[2], int set_color) {
+	Pawn(int set_color) {
 		name = "P";
-		pos[0] = set_pos[0];
-		pos[1] = set_pos[1];
 		color = set_color;
 	}
-	bool move(string turn, Board &board) {
-		return true;
-	}
-	bool check_move(string turn, Board &board) {
+	 bool check_move(int turn[2][2], Board &board) {
 		return true;
 	}
 };
@@ -157,30 +129,19 @@ class Pawn: public Figure {
  * Пустота
  * - Атрибуты: 
  * `string name` = " "
- * `int pos[2]` - {x, y};
  * `int color = 0`
  * - Методы:
  * `string get_symb` - выдает ` `*/
 class Empty: public Figure {
 	public:
 	Empty() {
-	}
-	Empty(int set_pos[2]) {
 		name = " ";
-		pos[0] = set_pos[0];
-		pos[1] = set_pos[1];
 		color = 0;
 	}
 	/**
 	 * Заглушка -> `false`
 	 */
-	bool move(string turn, Board &board) {
-		return false;
-	}
-	/**
-	 * Заглушка -> `false`
-	 */
-	virtual bool check_move(string turn, Board &board) {
+	virtual  bool check_move(int turn[2][2], Board &board) {
 		return false;
 	}
 };
@@ -188,40 +149,43 @@ class Empty: public Figure {
 /**
  * Доска
  * -Атрибуты:
- * `Figure * *cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
+ * `Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
+ * `int player_color` - цвет игрока, творящего ход, 1 - белый, -1 - черный
+ * `int turn[2][2] - {{x1, y1}, {x2, y2}} совершаемый ход`
  * -Методы:
  * `string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
+ * `void pass_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
  */
 class Board {
 	private:
-	Figure * cells[8][8];
+	Figure * cells[8][8]; ///`Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
+	int player_color = 1; ///`int player_color` - цвет игрока, творящего ход, 1 - белый, -1 - черный
+	int turn[2][2]; ///`int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
 	public:
 	Board() {
 		int pos[2];
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				pos[0] = j;
-				pos[1] = i;
 				if (i == 0 && (j == 0 || j == 7)) {
-					Rook * figure = new Rook(pos, 1);
+					Rook * figure = new Rook(1);
 					cells[i][j] = figure;
 				} else if (i == 7 && (j == 0 || j == 7)) {
-					Rook * figure = new Rook(pos, -1);
+					Rook * figure = new Rook(-1);
 					cells[i][j] = figure;
 				} else if (i == 1) {
-					Pawn * figure = new Pawn(pos, 1);
+					Pawn * figure = new Pawn(1);
 					cells[i][j] = figure;
 				} else if (i == 6) {
-					Pawn * figure = new Pawn(pos, -1);
+					Pawn * figure = new Pawn(-1);
 					cells[i][j] = figure;
 				} else if (i == 0 && j == 4) {
-					King * figure = new King(pos, 1);
+					King * figure = new King(1);
 					cells[i][j] = figure;
 				} else if (i == 7 && j == 4) {
-					King * figure = new King(pos, -1);
+					King * figure = new King(-1);
 					cells[i][j] = figure;
 				} else {
-					Empty * figure = new Empty(pos);
+					Empty * figure = new Empty();
 					cells[i][j] = figure;
 				}
 			}
@@ -238,6 +202,7 @@ class Board {
 	*`string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
 	*/
 	string render() {
+		cout << "\033c";
 		string rend = "";
 		string letter_mark = "    | a | b | c | d | e | f | g | h |   ";
 		rend += letter_mark + '\n';
@@ -260,15 +225,40 @@ class Board {
 		rend += letter_mark;
 		return rend;
 	}
-	bool check() {
-	    
+	/**
+	 * `void pass_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`, считаем корректным по записи (!= правильный ход, просто гарантированно не кракозябра)
+	 */
+	void pass_turn(string str_turn) {
+		if (str_turn[1] == 'x') { //cxd4
+			turn[1][0] = lettet_to_int(str_turn[2]);
+			turn[1][1] = char_to_int(str_turn[3]);
+			turn[0][0] = lettet_to_int(str_turn[0]);
+			turn[0][1] = turn[1][1] - player_color;
+		} else if (str_turn[2] == '-') { //e5-e7
+			turn[0][0] = lettet_to_int(str_turn[0]);
+			turn[0][1] = char_to_int(str_turn[1]);
+			turn[1][0] = lettet_to_int(str_turn[3]);
+			turn[1][1] = char_to_int(str_turn[4]);
+		} else { //Re1-e4
+			turn[0][0] = lettet_to_int(str_turn[1]);
+			turn[0][1] = char_to_int(str_turn[2]);
+			turn[1][0] = lettet_to_int(str_turn[4]);
+			turn[1][1] = char_to_int(str_turn[5]);
+		}
+	}
+	bool try_move(Board &board) {
+		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, board)) {
+			return true;
+		}
+		return false;
 	}
 };
 int main() {
 	Board * board = new Board;
 	string turn;
 	cin >> turn;
-	cout << board->render();
+	board->pass_turn(turn);
+	cout << board->try_move(*board);
 	delete board;
 	return 0;
 }
