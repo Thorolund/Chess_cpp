@@ -32,7 +32,7 @@ class Figure {
 		} else if (color == -1) {
 			return "-" + name + " ";
 		}
-		return "  ";
+		return "   ";
 	}
 	/**
 	 * `virtual bool move(string turn, Board &board) = 0;` - передвижение фигуры, если возможно
@@ -198,7 +198,7 @@ class Board {
 			}
 		}
 	}
-	~Board() {
+	~Board() {  
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				delete cells[i][j];
@@ -207,12 +207,13 @@ class Board {
 	}
 	string render() {
 		string rend = "";
-		string liter_mark = "|   | a | b | c | d | e | f | g | h |   |";
+		string liter_mark = "    | a | b | c | d | e | f | g | h |   ";
 		rend += liter_mark + '\n';
 		string numb_mark = "12345678";
 		string row;
 		for (int i = 7; i > -1; i--) {
-			row = "| ";
+		    rend += "-----------------------------------------\n";
+			row = "  ";
 			row += numb_mark[i];
 			row += " ";
 			for (int j = 0; j < 8; j++) {
@@ -220,9 +221,10 @@ class Board {
 			}
 			row += "| ";
 			row += numb_mark[i];
-			row += " |\n";
+			row += " \n";
 			rend += row;
 		}
+		rend += "-----------------------------------------\n";
 		rend += liter_mark;
 		return rend;
 	}
