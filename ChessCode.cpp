@@ -1,6 +1,35 @@
 #include <iostream>
 #include <string>
 using namespace std;
+/**
+* `int char_to_int(char n)` - переводит char обозначение Oy в int
+*/
+int char_to_int(char n) {
+    string letters = "12345678";
+    int res = -1;
+	for (int i = 0; i < 8; i++) {
+	    if (letters[i] == n) {
+	        res = i;
+	        break;
+	        }
+	    }
+	return res;
+}
+/**
+* `int lettet_to_int(char a)` - переводит буквенное обозначение Ox в int
+*/
+int lettet_to_int(char a) {
+	string letters = "abcdefgh";
+	int res = -1;
+	for (int i = 0; i < 8; i++) {
+        if (letters[i] == a) {
+            res = i;
+	        break;
+	    }
+	}
+	return res;
+}
+
 class Board;
 
 /** 
@@ -11,8 +40,8 @@ class Board;
  * `int color` 1 - белый, -1 - черный, 0 - пустота
  * - Методы:
  * `string get_symb` - выдает имя, + минус если черный
- * `virtual bool move(string turn, Board &board) = 0;` - передвижение фигуры, если возможно
- * `virtual bool check_move(string turn, Board &board) = 0;` - проверка возможности хода*/
+ * `virtual bool move(int turn[2], Board &board) = 0;` - передвижение фигуры, если возможно
+ * `virtual bool check_move(int turn[2], Board &board) = 0;` - проверка возможности хода*/
 class Figure {
 	protected:
 	int pos[2]; ///`int pos[2]` - {x, y};
@@ -37,11 +66,11 @@ class Figure {
 	/**
 	 * `virtual bool move(string turn, Board &board) = 0;` - передвижение фигуры, если возможно
 	 */
-	virtual bool move(string turn, Board &board) = 0;
+	virtual bool move(int turn[2], Board &board) = 0;
 	/**
 	 * `virtual bool check_move(string turn, Board &board) = 0;` - проверка возможности хода
 	 */
-	virtual bool check_move(string turn, Board &board) = 0;
+	virtual bool check_move(int turn[2], Board &board) = 0;
 };
 /** 
  * Король
@@ -51,8 +80,8 @@ class Figure {
  * `int color` 1 - белый, -1 - черный
  * - Методы:
  * `string get_symb` - выдает `K`, + минус если черный
- * `bool move(string turn, Board &board) = 0;` - передвижение на одну клетку в восьми направлениях, если возможно
- * `bool check_move(string turn, Board &board) = 0;` - проверка возможности хода*/
+ * `bool move(int turn[2], Board &board) = 0;` - передвижение на одну клетку в восьми направлениях, если возможно
+ * `bool check_move(int turn[2], Board &board) = 0;` - проверка возможности хода*/
 class King: public Figure {
 	public:
 	King() {
@@ -63,23 +92,23 @@ class King: public Figure {
 		pos[1] = set_pos[1];
 		color = set_color;
 	}
-	bool move(string turn, Board &board) {
+	bool move(int turn[2], Board &board) {
 		return true;
 	}
-	bool check_move(string turn, Board &board) {
+	bool check_move(int turn[2], Board &board) {
 		return true;
 	}
 };
 /** 
- * Король
+ * Ладья
  * - Атрибуты: 
  * `string name` = "R"
  * `int pos[2]` - {x, y};
  * `int color` 1 - белый, -1 - черный
  * - Методы:
  * `string get_symb` - выдает `R`, + минус если черный
- * `bool move(string turn, Board &board) = 0;` - передвижение на линию в четырех направлениях, если возможно
- * `bool check_move(string turn, Board &board) = 0;` - проверка возможности хода*/
+ * `bool move(int turn[2], Board &board) = 0;` - передвижение на линию в четырех направлениях, если возможно
+ * `bool check_move(int turn[2], Board &board) = 0;` - проверка возможности хода*/
 class Rook: public Figure {
 	public:
 	Rook() {
@@ -205,10 +234,13 @@ class Board {
 			}
 		}
 	}
+	/**
+	*`string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
+	*/
 	string render() {
 		string rend = "";
-		string liter_mark = "    | a | b | c | d | e | f | g | h |   ";
-		rend += liter_mark + '\n';
+		string letter_mark = "    | a | b | c | d | e | f | g | h |   ";
+		rend += letter_mark + '\n';
 		string numb_mark = "12345678";
 		string row;
 		for (int i = 7; i > -1; i--) {
@@ -225,12 +257,17 @@ class Board {
 			rend += row;
 		}
 		rend += "-----------------------------------------\n";
-		rend += liter_mark;
+		rend += letter_mark;
 		return rend;
+	}
+	bool check() {
+	    
 	}
 };
 int main() {
-	Board * board = new(Board);
+	Board * board = new Board;
+	string turn;
+	cin >> turn;
 	cout << board->render();
 	delete board;
 	return 0;
