@@ -121,7 +121,7 @@ class Pawn: public Figure {
 		name = "P";
 		color = set_color;
 	}
-	 bool check_move(int turn[2][2], Board &board) {
+	bool check_move(int turn[2][2], Board &board) {
 		return true;
 	}
 };
@@ -148,18 +148,21 @@ class Empty: public Figure {
 
 /**
  * Доска
- * -Атрибуты:
+ * - Атрибуты:
  * `Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
- * `int player_color` - цвет игрока, творящего ход, 1 - белый, -1 - черный
- * `int turn[2][2] - {{x1, y1}, {x2, y2}} совершаемый ход`
- * -Методы:
+ * `int player_color` - цвет игрока, творящего ход, `1` - белый, `-1` - черный
+ * `int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
+ * - Методы:
  * `string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
- * `void pass_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
+ * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
+ * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
+ * `bool is_check()` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
+ * `bool is_mate()` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мата
  */
 class Board {
 	private:
 	Figure * cells[8][8]; ///`Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
-	int player_color = 1; ///`int player_color` - цвет игрока, творящего ход, 1 - белый, -1 - черный
+	int player_color = 1; ///`int player_color` - цвет игрока, творящего ход, `1` - белый, `-1` - черный
 	int turn[2][2]; ///`int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
 	public:
 	Board() {
@@ -198,11 +201,13 @@ class Board {
 			}
 		}
 	}
+	int get_color() {
+		return player_color;
+	}
 	/**
 	*`string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
 	*/
 	string render() {
-		cout << "\033c";
 		string rend = "";
 		string letter_mark = "    | a | b | c | d | e | f | g | h |   ";
 		rend += letter_mark + '\n';
@@ -226,9 +231,9 @@ class Board {
 		return rend;
 	}
 	/**
-	 * `void pass_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`, считаем корректным по записи (!= правильный ход, просто гарантированно не кракозябра)
+	 * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`, считаем корректным по записи (!= правильный ход, просто гарантированно не кракозябра)
 	 */
-	void pass_turn(string str_turn) {
+	void set_turn(string str_turn) {
 		if (str_turn[1] == 'x') { //cxd4
 			turn[1][0] = lettet_to_int(str_turn[2]);
 			turn[1][1] = char_to_int(str_turn[3]);
@@ -246,19 +251,61 @@ class Board {
 			turn[1][1] = char_to_int(str_turn[5]);
 		}
 	}
+	/**
+	 * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
+	 */
 	bool try_move(Board &board) {
 		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, board)) {
+			swap(cells[turn[0][1]][turn[0][0]], cells[turn[1][1]][turn[1][0]]);
+			delete cells[turn[0][1]][turn[0][0]];
+			Empty * new_empty = new Empty();
+			cells[turn[0][1]][turn[0][0]] = new_empty;
+			player_color = -player_color;
 			return true;
 		}
 		return false;
+	}
+	/**
+	 * `bool is_check()` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
+	 */
+	int is_check() {
+		return 0;
+	}
+	/**
+	 * `bool is_mate()` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мат
+	 */
+	int is_mate() {
+		return 0;
 	}
 };
 int main() {
 	Board * board = new Board;
 	string turn;
-	cin >> turn;
-	board->pass_turn(turn);
-	cout << board->try_move(*board);
+	int color;
+	while (board->is_mate() == 0) {
+		cout << board->render() << endl;
+		color = board->get_color();
+		if (board->is_check() != 0) {
+			cout << "Check!" << endl;
+		}
+		if (color == 1) {
+			cout << "White:    ";
+		} else {
+			cout << "Black:	   ";
+		}
+		cin >> turn;
+		board->set_turn(turn);
+		while(!board->try_move(*board)) {
+			cout << "Incorrect move" << endl;
+			if (color == 1) {
+				cout << "White:    ";
+			} else {
+				cout << "Black:	   ";
+			}
+			cin >> turn;
+			board->set_turn(turn);
+		}
+	}
 	delete board;
 	return 0;
 }
