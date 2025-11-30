@@ -50,7 +50,7 @@ class Figure {
 	virtual ~Figure() {
 	}
 	/**
-	 * `string get_symb` - выдает имя, минус если черный
+	 * `string get_symb` - выдает имя, минус если черный (` R `/`-K `)
 	 */
 	string get_symb() {
 		if (color == 1) {
@@ -59,6 +59,9 @@ class Figure {
 			return "-" + name + " ";
 		}
 		return "   ";
+	}
+	int get_color() {
+		return color;
 	}
 	/**
 	 * `virtual bool move(int turn[2], Board &board)` - проверка возможности хода
@@ -152,6 +155,7 @@ class Empty: public Figure {
  * `Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
  * `int player_color` - цвет игрока, творящего ход, `1` - белый, `-1` - черный
  * `int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
+ * `string turn_figure` - фигура, указанная в ходе
  * - Методы:
  * `string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
  * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
@@ -164,9 +168,9 @@ class Board {
 	Figure * cells[8][8]; ///`Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
 	int player_color = 1; ///`int player_color` - цвет игрока, творящего ход, `1` - белый, `-1` - черный
 	int turn[2][2]; ///`int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
+	string turn_figure; ///`string turne_figure` - фигура, указанная в ходе
 	public:
 	Board() {
-		int pos[2];
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				if (i == 0 && (j == 0 || j == 7)) {
@@ -188,11 +192,43 @@ class Board {
 					King * figure = new King(-1);
 					cells[i][j] = figure;
 				} else {
-					Empty * figure = new Empty();
-					cells[i][j] = figure;
+					cells[i][j] = new Empty();
 				}
 			}
 		}
+	}
+	Board(Board &board) {
+		turn[0][0] = board.turn[0][0];
+		turn[0][1] = board.turn[0][1];
+		turn[1][0] = board.turn[1][0];
+		turn[1][1] = board.turn[1][1];
+		player_color = board.player_color;
+		turn_figure = board.turn_figure;
+		string type_figure;
+		int color_figure;
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				type_figure = board.cells[i][j]->get_symb();
+				if (type_figure[0] == '-') {
+					color_figure = -1;
+				} else {
+					color_figure = 0;
+				}
+				if (type_figure[1] == 'P') {
+					cells[i][j] = new Pawn(color_figure);
+				} else if (type_figure[1] == 'R') {
+					cells[i][j] = new Rook(color_figure);
+				} else if (type_figure[1] == 'K') {
+					cells[i][j] = new King(color_figure);
+				} else {
+					cells[i][j] = new Empty();
+				}
+			}
+		}
+		swap(cells[turn[0][1]][turn[0][0]], cells[turn[1][1]][turn[1][0]]);
+		delete cells[turn[0][1]][turn[0][0]];
+		Empty * new_empty = new Empty();
+		cells[turn[0][1]][turn[0][0]] = new_empty;
 	}
 	~Board() {  
 		for (int i = 0; i < 8; i++) {
@@ -234,28 +270,53 @@ class Board {
 	 * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`, считаем корректным по записи (!= правильный ход, просто гарантированно не кракозябра)
 	 */
 	void set_turn(string str_turn) {
-		if (str_turn[1] == 'x') { //cxd4
+		turn[0][0] = -1;
+		if (str_turn.size() >= 4 && str_turn[1] == 'x') { //cxd4
 			turn[1][0] = lettet_to_int(str_turn[2]);
 			turn[1][1] = char_to_int(str_turn[3]);
 			turn[0][0] = lettet_to_int(str_turn[0]);
 			turn[0][1] = turn[1][1] - player_color;
-		} else if (str_turn[2] == '-') { //e5-e7
+			turn_figure = " P";
+			if (player_color == -1) {
+				turn_figure[0] = '!';
+			}
+		} else if (str_turn.size() >= 5 && str_turn[2] == '-') { //e5-e7
 			turn[0][0] = lettet_to_int(str_turn[0]);
 			turn[0][1] = char_to_int(str_turn[1]);
 			turn[1][0] = lettet_to_int(str_turn[3]);
 			turn[1][1] = char_to_int(str_turn[4]);
-		} else { //Re1-e4
+			turn_figure = " P";
+			if (player_color == -1) {
+				turn_figure[0] = '!';
+			}
+		} else if (str_turn.size() >= 6) { //Re1-e4
 			turn[0][0] = lettet_to_int(str_turn[1]);
 			turn[0][1] = char_to_int(str_turn[2]);
 			turn[1][0] = lettet_to_int(str_turn[4]);
 			turn[1][1] = char_to_int(str_turn[5]);
+			turn_figure = " K";
+			if (player_color == -1) {
+				turn_figure[0] = '!';
+			}
 		}
 	}
 	/**
 	 * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
 	 */
 	bool try_move(Board &board) {
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 2; j++) {
+				if (turn[i][j] == -1) {
+					return false;
+				}
+			}
+		}
 		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, board)) {
+			Board * try_board = new Board(board);
+			if (try_board->is_check(*try_board) == player_color) {
+				delete try_board;
+				return false;
+			}
 			swap(cells[turn[0][1]][turn[0][0]], cells[turn[1][1]][turn[1][0]]);
 			delete cells[turn[0][1]][turn[0][0]];
 			Empty * new_empty = new Empty();
@@ -268,8 +329,36 @@ class Board {
 	/**
 	 * `bool is_check()` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
 	 */
-	int is_check() {
-		return 0;
+	int is_check(Board &board) {
+		string king_type = " K ";
+		int king_pos[2];
+		if (player_color == -1) {
+			king_type[0] = '-';
+		}
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				if (cells[i][j]->get_symb() == king_type) {
+					king_pos[0] = j;
+					king_pos[1] = i;
+					break;
+				}
+			}
+		}
+		int check_turn[2][2];
+		check_turn[1][0] = king_pos[0];
+		check_turn[1][1] = king_pos[1];
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				if ((i != king_pos[0] || j != king_pos[1]) && cells[i][j]->get_color() == -player_color) {
+					check_turn[0][0] = j;
+					check_turn[0][1] = i;
+					if (cells[i][j]->check_move(check_turn, board)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 	/**
 	 * `bool is_mate()` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мат
@@ -283,9 +372,12 @@ int main() {
 	string turn;
 	int color;
 	while (board->is_mate() == 0) {
+		for (int i = 0; i < 100; i++) {
+			cout << endl;
+		}
 		cout << board->render() << endl;
 		color = board->get_color();
-		if (board->is_check() != 0) {
+		if (board->is_check(*board) != 0) {
 			cout << "Check!" << endl;
 		}
 		if (color == 1) {
