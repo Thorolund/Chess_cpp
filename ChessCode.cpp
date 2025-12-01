@@ -125,7 +125,29 @@ class Pawn: public Figure {
 		color = set_color;
 	}
 	bool check_move(int turn[2][2], Board &board) {
-		return true;
+		bool res = false;
+		int empty_pos[2];
+		if (turn[1][1] - turn[0][1] == color && turn[0][0] == turn[1][0]) {
+			empty_pos[0] = turn[1][0];
+			empty_pos[1] = turn[1][1];
+			res = board.get_figure_color(empty_pos) == 0;
+		} else if (turn[1][1] - turn[0][1] == 2*color && turn[0][0] == turn[1][0]) {
+			empty_pos[0] = turn[1][0];
+			empty_pos[1] = turn[1][1] - color;
+			if (color == 1 && turn[0][1] == 1) {
+				res = board.get_figure_color(turn[1]) == 0;
+				if (res) {
+					res = board.get_figure_color(empty_pos) == 0;
+				}
+			} else if (color == 6 && turn[0][1] == 1) {
+				res = board.get_figure_color(turn[1]) == 0;
+				if (res) {
+					res = board.get_figure_color(empty_pos) == 0;
+				}
+			}
+		} else if (turn[1][1] - turn[0][1] == color && (turn[0][0] - turn[1][0] == 1 || turn[0][0] - turn[1][0] == -1)) {
+			res = board.get_figure_color(turn[1]) == -color;
+		}
 	}
 };
 /** 
@@ -160,16 +182,16 @@ class Empty: public Figure {
  * `string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
  * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
  * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
- * `bool is_check()` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
- * `bool is_mate()` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мата
+ * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
+ * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мата
  */
 class Board {
 	private:
 	Figure * cells[8][8]; ///`Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
 	int player_color = 1; ///`int player_color` - цвет игрока, творящего ход, `1` - белый, `-1` - черный
-	int turn[2][2]; ///`int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
 	string turn_figure; ///`string turne_figure` - фигура, указанная в ходе
 	public:
+	int turn[2][2]; ///`int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
 	Board() {
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
@@ -239,6 +261,9 @@ class Board {
 	}
 	int get_color() {
 		return player_color;
+	}
+	int get_figure_color(int pos[2]) {
+		return cells[pos[1]][pos[0]]->get_color();
 	}
 	/**
 	*`string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
@@ -322,12 +347,13 @@ class Board {
 			Empty * new_empty = new Empty();
 			cells[turn[0][1]][turn[0][0]] = new_empty;
 			player_color = -player_color;
+			delete try_board;
 			return true;
 		}
 		return false;
 	}
 	/**
-	 * `bool is_check()` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
+	 * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
 	 */
 	int is_check(Board &board) {
 		string king_type = " K ";
@@ -361,9 +387,9 @@ class Board {
 		return false;
 	}
 	/**
-	 * `bool is_mate()` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мат
+	 * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мат
 	 */
-	int is_mate() {
+	int is_mate(Board &board) {
 		return 0;
 	}
 };
@@ -371,7 +397,7 @@ int main() {
 	Board * board = new Board;
 	string turn;
 	int color;
-	while (board->is_mate() == 0) {
+	while (board->is_mate(*board) == 0) {
 		for (int i = 0; i < 100; i++) {
 			cout << endl;
 		}
