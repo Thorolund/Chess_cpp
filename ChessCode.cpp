@@ -366,6 +366,12 @@ class Board {
 			}
 		}
 	}
+	void set_turn(int int_turn[2][2]) {
+		turn[0][0] = int_turn[0][0];
+		turn[1][0] = int_turn[1][0];
+		turn[0][1] = int_turn[0][1];
+		turn[1][1] = int_turn[1][1];
+	}
 	/**
 	 * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
 	 */
@@ -379,11 +385,20 @@ class Board {
 		}
 		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, cells)) {
 			Board * try_board = new Board(board);
-			if (try_board->is_check(*try_board) == player_color) {
+			swap(try_board->cells[turn[0][1]][turn[0][0]], try_board->cells[turn[1][1]][turn[1][0]]);
+			if (try_board->is_check(*try_board)) {
 				delete try_board;
 				return false;
 			}
 			swap(cells[turn[0][1]][turn[0][0]], cells[turn[1][1]][turn[1][0]]);
+			if (cells[turn[1][1]][turn[1][0]]->get_symb() == " P " && turn[1][1] == 7) {
+				delete cells[turn[1][1]][turn[1][0]];
+				Rook * new_rook = new Rook(1);
+			}
+			if (cells[turn[1][1]][turn[1][0]]->get_symb() == "-P " && turn[1][1] == 0) {
+				delete cells[turn[1][1]][turn[1][0]];
+				Rook * new_rook = new Rook(-1);
+			}
 			delete cells[turn[0][1]][turn[0][0]];
 			Empty * new_empty = new Empty();
 			cells[turn[0][1]][turn[0][0]] = new_empty;
@@ -396,7 +411,7 @@ class Board {
 	/**
 	 * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белым, `-1` - если шах черным, `0` - нет шаха
 	 */
-	int is_check(Board &board) {
+	bool is_check(Board &board) {
 		string king_type = " K ";
 		int king_pos[2];
 		if (player_color == -1) {
@@ -432,9 +447,42 @@ class Board {
 	 * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белым, `-1` - если мат черным, `0` - нет мат
 	 */
 	int is_mate(Board &board) {
-		return 0;
+		int checked_color = is_check(board);
+		bool can_move = true;
+		int maybe_turn[2][2];
+		int res = 0;
+		if (checked_color != 0) {
+			can_move = false;
+			for (int i = 0; i < 8; i++) {
+				for (int j = 0; j < 8; j++) {
+					if (cells[i][j]->get_color() == checked_color) {
+						for (int alt_i = 0; alt_i < 8; alt_i++) {
+							for (int alt_j = 0; alt_j < 8; alt_j++) {
+								maybe_turn[0][1] = i;
+								maybe_turn[0][0] = j;
+								maybe_turn[1][0] = alt_j;
+								maybe_turn[1][1] = alt_i;
+								Board * try_board = new Board(board);
+								try_board->set_turn(maybe_turn);
+								if (try_board->try_move(*try_board)) {
+									can_move = true;
+								}
+								delete try_board;
+							}
+						}
+					}
+				}
+			}
+			if (can_move) {
+				res = 0;
+			} else {
+				res = checked_color;
+			}
+		}
+		return res;
 	}
 };
+
 int main() {
 	Board * board = new Board;
 	string turn;
