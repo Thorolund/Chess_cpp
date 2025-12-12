@@ -122,7 +122,31 @@ class Rook: public Figure {
 		color = set_color;
 	}
 	bool check_move(int turn[2][2], Figure * cells[8][8]) {
-		return false;
+		bool res = true;
+		if (turn[1][0] != turn[0][0] && turn[1][1] != turn[0][1]) {
+			res = false;
+		}
+		if (cells[turn[1][1]][turn[1][0]]->get_color() == color) {
+			res = false;
+		}
+		if (turn[1][0] != turn[0][0] && res) {
+			int i = turn[1][1];
+			for (int j = min(turn[1][0], turn[0][0]) + 1; j < max(turn[1][0], turn[0][0]); j++) {
+				if (!cells[i][j]->get_color() == 0) {
+					res = false;
+					break;
+				}
+			}
+		} else if (turn[0][1] != turn[1][1] && res) {
+			int j = turn[0][0];
+			for (int i = min(turn[1][1], turn[0][1]) + 1; i < max(turn[1][1], turn[0][1]); i++) {
+				if (!cells[i][j]->get_color() == 0) {
+					res = false;
+					break;
+				}
+			}
+		}
+		return res;
 	}
 };
 /** 
@@ -252,11 +276,7 @@ class Board {
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				type_figure = board.cells[i][j]->get_symb();
-				if (type_figure[0] == '-') {
-					color_figure = -1;
-				} else {
-					color_figure = 0;
-				}
+				color_figure = board.cells[i][j]->get_color();
 				if (type_figure[1] == 'P') {
 					cells[i][j] = new Pawn(color_figure);
 				} else if (type_figure[1] == 'R') {
@@ -384,6 +404,7 @@ class Board {
 		}
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
+				string s = cells[i][j]->get_symb();
 				if (cells[i][j]->get_symb() == king_type) {
 					king_pos[0] = j;
 					king_pos[1] = i;
