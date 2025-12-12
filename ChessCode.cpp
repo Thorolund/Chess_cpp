@@ -91,8 +91,16 @@ class King: public Figure {
 		name = "K";
 		color = set_color;
 	}
-	 bool check_move(int turn[2][2], Figure * cells[8][8]) {
-		return false;
+	bool check_move(int turn[2][2], Figure * cells[8][8]) {
+		bool res = true;
+		if ((turn[1][0] - turn[0][0])*(turn[1][0] - turn[0][0]) > 1 ||
+			(turn[1][1] - turn[0][1])*(turn[1][1] - turn[0][1]) > 1) {
+				res = false;
+			}
+		if (cells[turn[1][1]][turn[1][0]]->get_color() == color) {
+			res = false;
+		}
+		return res;
 	}
 };
 /** 
