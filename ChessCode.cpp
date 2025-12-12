@@ -38,8 +38,10 @@ class Board;
  * `string name` - K, R, P, ' '
  * `int color` 1 - белый, -1 - черный, 0 - пустота
  * - Методы:
- * `string get_symb` - выдает имя, + минус если черный
- * `virtual  bool check_move(int turn[2][2], Board &board) = 0;` - проверка возможности хода*/
+ * `string get_symb` - выдает имя, + `-` если черный
+ * `int get_color` - выдает цвет
+ * `virtual  bool check_move(int turn[2][2], Figure * cells[8][8]) = 0;` - проверка возможности хода
+ * */
 class Figure {
 	protected:
 	string name; ///`string name` - K, R, P, ' '
@@ -60,13 +62,16 @@ class Figure {
 		}
 		return "   ";
 	}
+	/**
+	 * `int get_color` - выдает цвет
+	 */
 	int get_color() {
 		return color;
 	}
 	/**
 	 * `virtual bool move(int turn[2], Board &board)` - проверка возможности хода
 	 */
-	virtual  bool check_move(int turn[2][2], Board &board) = 0;
+	virtual  bool check_move(int turn[2][2], Figure * cells[8][8]) = 0;
 };
 /** 
  * Король
@@ -75,7 +80,9 @@ class Figure {
  * `int color` 1 - белый, -1 - черный
  * - Методы:
  * `string get_symb` - выдает `K`, + минус если черный
- * ` bool check_move(int turn[2][2], Board &board)` - проверка возможности хода*/
+ * `int get_color` - выдает цвет
+ * `bool check_move(int turn[2][2], Figure * cells[8][8])` - проверка возможности хода (в восьми напрвлениях на 1 клетку)
+ * */
 class King: public Figure {
 	public:
 	King() {
@@ -84,18 +91,20 @@ class King: public Figure {
 		name = "K";
 		color = set_color;
 	}
-	 bool check_move(int turn[2][2], Board &board) {
-		return true;
+	 bool check_move(int turn[2][2], Figure * cells[8][8]) {
+		return false;
 	}
 };
 /** 
  * Ладья
- * - Атрибуты: 
- * `string name` = "R"
+ * - Атрибуты:
+ * `string name` = `R`
  * `int color` 1 - белый, -1 - черный
  * - Методы:
- * `string get_symb` - выдает `R`, + минус если черный
- * ` bool check_move(int turn[2][2], Board &board)` - проверка возможности хода*/
+ * `string get_symb` - выдает `R`, + `-` если черный
+ * `int get_color` - выдает цвет
+ * `bool check_move(int turn[2][2], Figure * cells[8][8])` - проверка возможности хода
+ * */
 class Rook: public Figure {
 	public:
 	Rook() {
@@ -104,17 +113,18 @@ class Rook: public Figure {
 		name = "R";
 		color = set_color;
 	}
-	 bool check_move(int turn[2][2], Board &board) {
-		return true;
+	bool check_move(int turn[2][2], Figure * cells[8][8]) {
+		return false;
 	}
 };
 /** 
  * Пешка
  * - Атрибуты: 
- * `string name` = "P"
+ * `string name` = `P`
  * `int color` 1 - белый, -1 - черный
  * - Методы:
- * `string get_symb` - выдает `P`, + минус если черный
+ * `string get_symb` - выдает `P`, + `-` если черный
+ * `int get_color` - выдает цвет
  * `bool move(int turn[2], Board &board)` - проверка возможности хода*/
 class Pawn: public Figure {
 	public:
@@ -124,30 +134,31 @@ class Pawn: public Figure {
 		name = "P";
 		color = set_color;
 	}
-	bool check_move(int turn[2][2], Board &board) {
+	bool check_move(int turn[2][2], Figure * cells[8][8]) {
 		bool res = false;
 		int empty_pos[2];
 		if (turn[1][1] - turn[0][1] == color && turn[0][0] == turn[1][0]) {
 			empty_pos[0] = turn[1][0];
 			empty_pos[1] = turn[1][1];
-			res = board.get_figure_color(empty_pos) == 0;
+			res = cells[empty_pos[1]][empty_pos[0]]->get_color() == 0;
 		} else if (turn[1][1] - turn[0][1] == 2*color && turn[0][0] == turn[1][0]) {
 			empty_pos[0] = turn[1][0];
 			empty_pos[1] = turn[1][1] - color;
 			if (color == 1 && turn[0][1] == 1) {
-				res = board.get_figure_color(turn[1]) == 0;
+				res = cells[turn[1][1]][turn[1][0]]->get_color() == 0;
 				if (res) {
-					res = board.get_figure_color(empty_pos) == 0;
+					res = cells[empty_pos[1]][empty_pos[0]]->get_color() == 0;
 				}
-			} else if (color == 6 && turn[0][1] == 1) {
-				res = board.get_figure_color(turn[1]) == 0;
+			} else if (color == -1 && turn[0][1] == 6) {
+				res = cells[turn[1][1]][turn[1][0]]->get_color() == 0;
 				if (res) {
-					res = board.get_figure_color(empty_pos) == 0;
+					res = cells[empty_pos[1]][empty_pos[0]]->get_color() == 0;
 				}
 			}
 		} else if (turn[1][1] - turn[0][1] == color && (turn[0][0] - turn[1][0] == 1 || turn[0][0] - turn[1][0] == -1)) {
-			res = board.get_figure_color(turn[1]) == -color;
+			res = cells[turn[1][1]][turn[1][0]]->get_color() == -color;
 		}
+		return res;
 	}
 };
 /** 
@@ -156,7 +167,9 @@ class Pawn: public Figure {
  * `string name` = " "
  * `int color = 0`
  * - Методы:
- * `string get_symb` - выдает ` `*/
+ * `string get_symb` - выдает ` `
+ * `int get_color` - выдает `0`
+ * */
 class Empty: public Figure {
 	public:
 	Empty() {
@@ -166,7 +179,7 @@ class Empty: public Figure {
 	/**
 	 * Заглушка -> `false`
 	 */
-	virtual  bool check_move(int turn[2][2], Board &board) {
+	virtual  bool check_move(int turn[2][2], Figure * cells[8][8]) {
 		return false;
 	}
 };
@@ -182,14 +195,14 @@ class Empty: public Figure {
  * `string render()` - возвращает отрисованое поле одной строкой, с отображением букв и разделений
  * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
  * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
- * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
- * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мата
+ * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белым, `-1` - если шах черным, `0` - нет шаха
+ * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белым, `-1` - если мат черным, `0` - нет мата
  */
 class Board {
 	private:
-	Figure * cells[8][8]; ///`Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
 	int player_color = 1; ///`int player_color` - цвет игрока, творящего ход, `1` - белый, `-1` - черный
 	string turn_figure; ///`string turne_figure` - фигура, указанная в ходе
+	Figure * cells[8][8]; ///`Figure * cells[8][8]` - двумерный массив фигур, Ox: 0 -> 'a', 1 -> 'b'..., Oy: 0 -> 1, 1 -> 2...
 	public:
 	int turn[2][2]; ///`int turn[2][2]` - {{x1, y1}, {x2, y2}} совершаемый ход
 	Board() {
@@ -336,7 +349,7 @@ class Board {
 				}
 			}
 		}
-		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, board)) {
+		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, cells)) {
 			Board * try_board = new Board(board);
 			if (try_board->is_check(*try_board) == player_color) {
 				delete try_board;
@@ -353,7 +366,7 @@ class Board {
 		return false;
 	}
 	/**
-	 * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белому, `-1` - если шах черному, `0` - нет шаха
+	 * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белым, `-1` - если шах черным, `0` - нет шаха
 	 */
 	int is_check(Board &board) {
 		string king_type = " K ";
@@ -378,7 +391,7 @@ class Board {
 				if ((i != king_pos[0] || j != king_pos[1]) && cells[i][j]->get_color() == -player_color) {
 					check_turn[0][0] = j;
 					check_turn[0][1] = i;
-					if (cells[i][j]->check_move(check_turn, board)) {
+					if (cells[i][j]->check_move(check_turn, cells)) {
 						return true;
 					}
 				}
@@ -387,7 +400,7 @@ class Board {
 		return false;
 	}
 	/**
-	 * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белому, `-1` - если мат черному, `0` - нет мат
+	 * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белым, `-1` - если мат черным, `0` - нет мат
 	 */
 	int is_mate(Board &board) {
 		return 0;
@@ -397,7 +410,8 @@ int main() {
 	Board * board = new Board;
 	string turn;
 	int color;
-	while (board->is_mate(*board) == 0) {
+	int mate = 0;
+	while (mate == 0) {
 		for (int i = 0; i < 100; i++) {
 			cout << endl;
 		}
@@ -423,6 +437,7 @@ int main() {
 			cin >> turn;
 			board->set_turn(turn);
 		}
+		mate = board->is_mate(*board);
 	}
 	delete board;
 	return 0;
