@@ -519,6 +519,7 @@ int main() {
 	string turn;
 	int color;
 	int mate = 0;
+	cout << "Annotation (examples):\ne2-e4\naxb3\nKe2-f2\n";
 	while (mate == 0) {
 		for (int i = 0; i < 100; i++) {
 			cout << endl;
@@ -546,6 +547,15 @@ int main() {
 			board->set_turn(turn);
 		}
 		mate = board->is_mate(*board);
+	}
+	for (int i = 0; i < 100; i++) {
+			cout << endl;
+		}
+		cout << board->render() << endl;
+	if (mate == 1) {
+		cout << "White won!";
+	} else {
+		cout << "Black won!";
 	}
 	delete board;
 	return 0;
