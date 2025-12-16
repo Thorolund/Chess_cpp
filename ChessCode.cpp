@@ -228,6 +228,7 @@ class Empty: public Figure {
  * `void set_turn(string str_turn)` - принимает ход, на его основе изменяет `turn`
  * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
  * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белым, `-1` - если шах черным, `0` - нет шаха
+ * `bool is_check()` - перегрузка для инкапсуляции
  * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белым, `-1` - если мат черным, `0` - нет мата
  */
 class Board {
@@ -271,12 +272,12 @@ class Board {
 		turn[1][1] = board.turn[1][1];
 		player_color = board.player_color;
 		turn_figure = board.turn_figure;
-		string type_figure;
-		int color_figure;
+		
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				type_figure = board.cells[i][j]->get_symb();
-				color_figure = board.cells[i][j]->get_color();
+				string type_figure = board.cells[i][j]->get_symb();
+				int color_figure = board.cells[i][j]->get_color();
+				
 				if (type_figure[1] == 'P') {
 					cells[i][j] = new Pawn(color_figure);
 				} else if (type_figure[1] == 'R') {
@@ -288,10 +289,6 @@ class Board {
 				}
 			}
 		}
-		swap(cells[turn[0][1]][turn[0][0]], cells[turn[1][1]][turn[1][0]]);
-		delete cells[turn[0][1]][turn[0][0]];
-		Empty * new_empty = new Empty();
-		cells[turn[0][1]][turn[0][0]] = new_empty;
 	}
 	~Board() {  
 		for (int i = 0; i < 8; i++) {
@@ -373,8 +370,8 @@ class Board {
 		turn[1][1] = int_turn[1][1];
 	}
 	/**
-	 * `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
-	 */
+	* `bool try_move(Board &board)` - пытается совершить ход, `true` - если ход совершен
+	*/
 	bool try_move(Board &board) {
 		for (int i = 0; i < 2; i++) {
 			for (int j = 0; j < 2; j++) {
@@ -383,56 +380,83 @@ class Board {
 				}
 			}
 		}
+		
+		// Проверяем, что фигура, которую хотим двигать, принадлежит текущему игроку
+		if (cells[turn[0][1]][turn[0][0]]->get_color() != player_color) {
+			return false;
+		}
+		
 		if (cells[turn[0][1]][turn[0][0]]->check_move(turn, cells)) {
+			// Создаем копию доски для проверки
 			Board * try_board = new Board(board);
+			
+			// Делаем ход на пробной доске
 			swap(try_board->cells[turn[0][1]][turn[0][0]], try_board->cells[turn[1][1]][turn[1][0]]);
-			if (try_board->is_check(*try_board)) {
+			
+			// Удаляем пустую клетку на старом месте
+			delete try_board->cells[turn[0][1]][turn[0][0]];
+			try_board->cells[turn[0][1]][turn[0][0]] = new Empty();
+			
+			// Проверяем, не будет ли шах королю того, кто делает ход
+			if (try_board->is_check(player_color)) {
 				delete try_board;
-				return false;
+				return false; // Ход оставляет короля под шахом
 			}
+			
+			// Если проверка прошла, делаем ход на реальной доске
 			swap(cells[turn[0][1]][turn[0][0]], cells[turn[1][1]][turn[1][0]]);
+			
+			// Превращение пешки в ладью (у вас здесь ошибка - не присваиваете new_rook клетке)
 			if (cells[turn[1][1]][turn[1][0]]->get_symb() == " P " && turn[1][1] == 7) {
 				delete cells[turn[1][1]][turn[1][0]];
-				Rook * new_rook = new Rook(1);
+				cells[turn[1][1]][turn[1][0]] = new Rook(1);
 			}
 			if (cells[turn[1][1]][turn[1][0]]->get_symb() == "-P " && turn[1][1] == 0) {
 				delete cells[turn[1][1]][turn[1][0]];
-				Rook * new_rook = new Rook(-1);
+				cells[turn[1][1]][turn[1][0]] = new Rook(-1);
 			}
+			
+			// Удаляем пустую клетку на старом месте
 			delete cells[turn[0][1]][turn[0][0]];
-			Empty * new_empty = new Empty();
-			cells[turn[0][1]][turn[0][0]] = new_empty;
-			player_color = -player_color;
+			cells[turn[0][1]][turn[0][0]] = new Empty();
+			
+			player_color = -player_color; // Меняем игрока
 			delete try_board;
 			return true;
 		}
 		return false;
 	}
 	/**
-	 * `bool is_check(Board &board)` - проверка на шах, `1` - если шах белым, `-1` - если шах черным, `0` - нет шаха
-	 */
-	bool is_check(Board &board) {
+	* `bool is_check(int king_color)` - проверка на шах для короля заданного цвета
+	* Возвращает true, если король цвета king_color находится под шахом
+	*/
+	bool is_check(int king_color) {
+		int king_pos[2] = {-1, -1};
 		string king_type = " K ";
-		int king_pos[2];
-		if (player_color == -1) {
+		if (king_color == -1) {
 			king_type[0] = '-';
 		}
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				string s = cells[i][j]->get_symb();
 				if (cells[i][j]->get_symb() == king_type) {
 					king_pos[0] = j;
 					king_pos[1] = i;
 					break;
 				}
 			}
+			if (king_pos[0] != -1) {
+				break;
+			}
+		}
+		if (king_pos[0] == -1) {
+			return false;
 		}
 		int check_turn[2][2];
 		check_turn[1][0] = king_pos[0];
 		check_turn[1][1] = king_pos[1];
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				if ((i != king_pos[0] || j != king_pos[1]) && cells[i][j]->get_color() == -player_color) {
+				if (cells[i][j]->get_color() == -king_color) {
 					check_turn[0][0] = j;
 					check_turn[0][1] = i;
 					if (cells[i][j]->check_move(check_turn, cells)) {
@@ -444,42 +468,49 @@ class Board {
 		return false;
 	}
 	/**
-	 * `bool is_mate(Board &board)` - проверка на мат, `1` - если мат белым, `-1` - если мат черным, `0` - нет мат
+	 * `bool is_check()` - перегрузка для инкапсуляции
+	 */
+	bool is_check() {
+		return is_check(player_color);
+	}
+	/**
+	 * `int is_mate(Board &board)` - проверка на мат
+	 * Возвращает: 1 - мат белым, -1 - мат черным, 0 - нет мата
 	 */
 	int is_mate(Board &board) {
-		int checked_color = is_check(board);
-		bool can_move = true;
+		if (!is_check(player_color)) {
+			return 0;
+		}
 		int maybe_turn[2][2];
-		int res = 0;
-		if (checked_color != 0) {
-			can_move = false;
-			for (int i = 0; i < 8; i++) {
-				for (int j = 0; j < 8; j++) {
-					if (cells[i][j]->get_color() == checked_color) {
-						for (int alt_i = 0; alt_i < 8; alt_i++) {
-							for (int alt_j = 0; alt_j < 8; alt_j++) {
-								maybe_turn[0][1] = i;
-								maybe_turn[0][0] = j;
-								maybe_turn[1][0] = alt_j;
-								maybe_turn[1][1] = alt_i;
-								Board * try_board = new Board(board);
-								try_board->set_turn(maybe_turn);
-								if (try_board->try_move(*try_board)) {
-									can_move = true;
-								}
-								delete try_board;
+		for (int start_i = 0; start_i < 8; start_i++) {
+			for (int start_j = 0; start_j < 8; start_j++) {
+				if (cells[start_i][start_j]->get_color() == player_color) {
+					for (int end_i = 0; end_i < 8; end_i++) {
+						for (int end_j = 0; end_j < 8; end_j++) {
+							if (start_i == end_i && start_j == end_j) continue;
+							maybe_turn[0][1] = start_i;
+							maybe_turn[0][0] = start_j;
+							maybe_turn[1][0] = end_j;
+							maybe_turn[1][1] = end_i;
+							if (!cells[start_i][start_j]->check_move(maybe_turn, cells)) {
+								continue;
 							}
+							Board * try_board = new Board(board);
+							try_board->player_color = player_color;
+							swap(try_board->cells[start_i][start_j], try_board->cells[end_i][end_j]);
+							delete try_board->cells[start_i][start_j];
+							try_board->cells[start_i][start_j] = new Empty();
+							if (!try_board->is_check(player_color)) {
+								delete try_board;
+								return 0;
+							}
+							delete try_board;
 						}
 					}
 				}
 			}
-			if (can_move) {
-				res = 0;
-			} else {
-				res = checked_color;
-			}
 		}
-		return res;
+		return player_color;
 	}
 };
 
@@ -494,7 +525,7 @@ int main() {
 		}
 		cout << board->render() << endl;
 		color = board->get_color();
-		if (board->is_check(*board) != 0) {
+		if (board->is_check() != 0) {
 			cout << "Check!" << endl;
 		}
 		if (color == 1) {
